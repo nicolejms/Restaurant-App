@@ -1,7 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    instrumentationHook: true
+    instrumentationHook: true,
+    serverComponentsExternalPackages: [
+      '@opentelemetry/api',
+      '@opentelemetry/resources',
+      '@opentelemetry/semantic-conventions',
+      '@opentelemetry/sdk-trace-node',
+      '@opentelemetry/exporter-trace-otlp-http',
+      '@opentelemetry/instrumentation',
+      '@opentelemetry/instrumentation-http',
+    ],
   },
   output: 'standalone',
   logging: {
