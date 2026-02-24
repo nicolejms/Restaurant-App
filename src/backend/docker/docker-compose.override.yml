@@ -55,7 +55,7 @@ services:
     environment:
       - INTERNAL_API_BASE_URL=http://traefik:80
       - NEXT_SHARP_PATH=./node_modules/sharp
-      - AUTH_ISSUER=http://host.docker.internal:5001/identity/realms/restaurant
+      - AUTH_ISSUER=http://localhost:5001/identity/realms/restaurant
       - AUTH_INTERNAL_ISSUER=http://keycloak:8080/identity/realms/restaurant
 
   keycloak:
@@ -67,7 +67,7 @@ services:
       - KC_DB_USERNAME=admin
       - KC_DB_PASSWORD=Passw0rd!
       - KC_HTTP_RELATIVE_PATH=/identity
-      - KC_HOSTNAME=http://host.docker.internal:5001/identity
+      - KC_HOSTNAME=http://localhost:5001/identity
 
   # connect:
   # pgcli 'postgresql://admin:Passw0rd!@localhost:5433/orderdb'

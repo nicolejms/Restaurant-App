@@ -1,7 +1,7 @@
 import { AuthOptions } from 'next-auth';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 
-const internalIssuer = process.env.AUTH_INTERNAL_ISSUER ?? process.env.AUTH_ISSUER;
+const internalIssuer = process.env.AUTH_INTERNAL_ISSUER
 
 console.log('[auth] AUTH_ISSUER:', process.env.AUTH_ISSUER);
 console.log('[auth] AUTH_INTERNAL_ISSUER:', process.env.AUTH_INTERNAL_ISSUER);
