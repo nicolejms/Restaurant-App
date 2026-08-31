@@ -1,6 +1,8 @@
 extension radius
 
 param environment string
+param publicAppUrl string
+param registryUsername string
 
 @secure()
 param authClientSecret string
@@ -12,10 +14,19 @@ param catalogDatabasePassword string
 param identityDatabasePassword string
 
 @secure()
+param keycloakAdminPassword string
+
+@secure()
+param keycloakRealmJson string
+
+@secure()
 param nextAuthSecret string
 
 @secure()
 param orderDatabasePassword string
+
+@secure()
+param registryPassword string
 
 resource restaurantApp 'Radius.Core/applications@2025-08-01-preview' = {
   name: 'restaurant-app'
@@ -41,8 +52,8 @@ resource identityPostgresDb 'Radius.Data/postgreSqlDatabases@2025-08-01-preview'
   properties: {
     environment: environment
     application: restaurantApp.id
-    codeReference: 'manifests/services/identity-api/base/config.env#L2'
-    database: 'identitydb'
+    codeReference: 'src/backend/docker/docker-compose.override.yml#L65'
+    database: 'keycloak'
     username: 'identityadmin'
     password: identityDatabasePassword
   }
@@ -80,12 +91,26 @@ resource kafkaBroker 'Radius.Messaging/kafka@2025-08-01-preview' = {
   }
 }
 
+resource keycloakRealmConfig 'Radius.Security/secrets@2025-08-01-preview' = {
+  name: 'keycloak-realm-config'
+  properties: {
+    environment: environment
+    application: restaurantApp.id
+    codeReference: 'src/backend/docker/keycloak/realm.json#L1'
+    data: {
+      'realm.json': {
+        value: keycloakRealmJson
+      }
+    }
+  }
+}
+
 resource otelCollectorConfig 'Radius.Security/secrets@2025-08-01-preview' = {
   name: 'otel-collector-config'
   properties: {
     environment: environment
     application: restaurantApp.id
-    codeReference: '.radius/app.bicep'
+    codeReference: 'src/backend/docker/otel-connector-config.yaml#L1'
     data: {
       'otel-collector-config.yaml': {
         #disable-next-line use-secure-value-for-secure-inputs
@@ -118,6 +143,24 @@ service:
   }
 }
 
+resource registryCreds 'Radius.Security/secrets@2025-08-01-preview' = {
+  name: 'radius-ghcr-registry-creds'
+  properties: {
+    environment: environment
+    application: restaurantApp.id
+    codeReference: '.github/workflows/build-release.yml#L1'
+    data: {
+      username: {
+        #disable-next-line use-secure-value-for-secure-inputs
+        value: registryUsername
+      }
+      password: {
+        value: registryPassword
+      }
+    }
+  }
+}
+
 resource cartImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   name: 'cart-api-image'
   properties: {
@@ -125,12 +168,15 @@ resource cartImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
     application: restaurantApp.id
     codeReference: 'src/backend/services/cart-api/Dockerfile'
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/cart-api?ref=7f3e81842b82d9064a282ad4ad1bde7d0e2c35a4'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/cart-api?ref=c4b6911d4c18a21f0577d91b25a0293d4f385aa8'
       platforms: [
         'linux/amd64'
       ]
     }
   }
+  dependsOn: [
+    registryCreds
+  ]
 }
 
 resource catalogImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
@@ -140,12 +186,15 @@ resource catalogImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
     application: restaurantApp.id
     codeReference: 'src/backend/services/catalog-api/Dockerfile'
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/catalog-api?ref=7f3e81842b82d9064a282ad4ad1bde7d0e2c35a4'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/catalog-api?ref=c4b6911d4c18a21f0577d91b25a0293d4f385aa8'
       platforms: [
         'linux/amd64'
       ]
     }
   }
+  dependsOn: [
+    registryCreds
+  ]
 }
 
 resource checkoutImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
@@ -155,12 +204,15 @@ resource checkoutImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
     application: restaurantApp.id
     codeReference: 'src/backend/services/checkout-api/Dockerfile'
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/checkout-api?ref=7f3e81842b82d9064a282ad4ad1bde7d0e2c35a4'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/checkout-api?ref=c4b6911d4c18a21f0577d91b25a0293d4f385aa8'
       platforms: [
         'linux/amd64'
       ]
     }
   }
+  dependsOn: [
+    registryCreds
+  ]
 }
 
 resource orderImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
@@ -170,12 +222,15 @@ resource orderImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
     application: restaurantApp.id
     codeReference: 'src/backend/services/order-api/Dockerfile'
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/order-api?ref=7f3e81842b82d9064a282ad4ad1bde7d0e2c35a4'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/order-api?ref=c4b6911d4c18a21f0577d91b25a0293d4f385aa8'
       platforms: [
         'linux/amd64'
       ]
     }
   }
+  dependsOn: [
+    registryCreds
+  ]
 }
 
 resource paymentImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
@@ -185,12 +240,15 @@ resource paymentImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
     application: restaurantApp.id
     codeReference: 'src/backend/services/payment-api/Dockerfile'
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/payment-api?ref=7f3e81842b82d9064a282ad4ad1bde7d0e2c35a4'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/payment-api?ref=c4b6911d4c18a21f0577d91b25a0293d4f385aa8'
       platforms: [
         'linux/amd64'
       ]
     }
   }
+  dependsOn: [
+    registryCreds
+  ]
 }
 
 resource webImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
@@ -200,48 +258,15 @@ resource webImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
     application: restaurantApp.id
     codeReference: 'src/backend/services/web-app/Dockerfile'
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/web-app?ref=7f3e81842b82d9064a282ad4ad1bde7d0e2c35a4'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/web-app?ref=c4b6911d4c18a21f0577d91b25a0293d4f385aa8'
       platforms: [
         'linux/amd64'
       ]
     }
   }
-}
-
-resource otelCollectorContainer 'Radius.Compute/containers@2025-08-01-preview' = {
-  name: 'otel-collector'
-  properties: {
-    environment: environment
-    application: restaurantApp.id
-    codeReference: '.radius/app.bicep'
-    containers: {
-      collector: {
-        image: 'otel/opentelemetry-collector-contrib:0.85.0'
-        args: [
-          '--config=/etc/otel-collector/otel-collector-config.yaml'
-        ]
-        ports: {
-          grpc: {
-            containerPort: 4317
-          }
-          http: {
-            containerPort: 4318
-          }
-        }
-        volumeMounts: [
-          {
-            volumeName: 'config'
-            mountPath: '/etc/otel-collector'
-          }
-        ]
-      }
-    }
-    volumes: {
-      config: {
-        secretName: otelCollectorConfig.name
-      }
-    }
-  }
+  dependsOn: [
+    registryCreds
+  ]
 }
 
 resource cartContainer 'Radius.Compute/containers@2025-08-01-preview' = {
@@ -305,14 +330,23 @@ resource catalogContainer 'Radius.Compute/containers@2025-08-01-preview' = {
           '-c'
         ]
         args: [
-          'export DATABASE_URL="postgres://catalogadmin:$1@$2:5432/catalogdb"; exec ./catalog-api'
-          'catalog-api'
-          catalogDatabasePassword
-          catalogPostgresDb.properties.host
+          'export DATABASE_URL="postgres://$CATALOG_DATABASE_USER:$CATALOG_DATABASE_PASSWORD@$CATALOG_DATABASE_HOST:5432/$CATALOG_DATABASE_NAME"; exec ./catalog-api'
         ]
         env: {
           BASE_URL: {
             value: '/catalog'
+          }
+          CATALOG_DATABASE_HOST: {
+            value: catalogPostgresDb.properties.host
+          }
+          CATALOG_DATABASE_NAME: {
+            value: 'catalogdb'
+          }
+          CATALOG_DATABASE_PASSWORD: {
+            value: catalogDatabasePassword
+          }
+          CATALOG_DATABASE_USER: {
+            value: 'catalogadmin'
           }
           ENV: {
             value: 'production'
@@ -395,45 +429,66 @@ resource checkoutContainer 'Radius.Compute/containers@2025-08-01-preview' = {
   }
 }
 
-resource identityContainer 'Radius.Compute/containers@2025-08-01-preview' = {
-  name: 'identity-api'
+resource keycloakContainer 'Radius.Compute/containers@2025-08-01-preview' = {
+  name: 'keycloak'
   properties: {
     environment: environment
     application: restaurantApp.id
     codeReference: '.radius/app.bicep'
     containers: {
-      identity: {
-        image: 'ghcr.io/chayxana/identity-api:0.0.8'
+      keycloak: {
+        image: 'quay.io/keycloak/keycloak:26.0'
+        args: [
+          'start-dev'
+          '--import-realm'
+        ]
         env: {
-          ASPNETCORE_ENVIRONMENT: {
-            value: 'Development'
+          KC_DB: {
+            value: 'postgres'
           }
-          DB_HOST: {
-            value: identityPostgresDb.properties.host
-          }
-          DB_NAME: {
-            value: 'identitydb'
-          }
-          DB_PASSWORD: {
+          KC_DB_PASSWORD: {
             value: identityDatabasePassword
           }
-          DB_USER: {
+          KC_DB_URL: {
+            value: 'jdbc:postgresql://${identityPostgresDb.properties.host}:5432/keycloak'
+          }
+          KC_DB_USERNAME: {
             value: 'identityadmin'
           }
-          PATH_BASE: {
+          KC_HOSTNAME: {
+            value: '${publicAppUrl}/identity'
+          }
+          KC_HTTP_RELATIVE_PATH: {
             value: '/identity'
+          }
+          KEYCLOAK_ADMIN: {
+            value: 'admin'
+          }
+          KEYCLOAK_ADMIN_PASSWORD: {
+            value: keycloakAdminPassword
           }
         }
         ports: {
           web: {
-            containerPort: 80
+            containerPort: 8080
           }
         }
+        volumeMounts: [
+          {
+            volumeName: 'realm'
+            mountPath: '/opt/keycloak/data/import'
+          }
+        ]
       }
     }
     connections: {
       postgresdb: {
         source: identityPostgresDb.id
+      }
+    }
+    volumes: {
+      realm: {
+        secretName: keycloakRealmConfig.name
       }
     }
   }
@@ -492,6 +547,42 @@ resource orderContainer 'Radius.Compute/containers@2025-08-01-preview' = {
   }
 }
 
+resource otelCollectorContainer 'Radius.Compute/containers@2025-08-01-preview' = {
+  name: 'otel-collector'
+  properties: {
+    environment: environment
+    application: restaurantApp.id
+    codeReference: '.radius/app.bicep'
+    containers: {
+      collector: {
+        image: 'otel/opentelemetry-collector-contrib:0.85.0'
+        args: [
+          '--config=/etc/otel-collector/otel-collector-config.yaml'
+        ]
+        ports: {
+          grpc: {
+            containerPort: 4317
+          }
+          http: {
+            containerPort: 4318
+          }
+        }
+        volumeMounts: [
+          {
+            volumeName: 'config'
+            mountPath: '/etc/otel-collector'
+          }
+        ]
+      }
+    }
+    volumes: {
+      config: {
+        secretName: otelCollectorConfig.name
+      }
+    }
+  }
+}
+
 resource paymentContainer 'Radius.Compute/containers@2025-08-01-preview' = {
   name: 'payment-api'
   properties: {
@@ -506,7 +597,7 @@ resource paymentContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             value: '/payment'
           }
           ENABLE_TEST_CARDS: {
-            value: 'true'
+            value: 'false'
           }
           OTEL_EXPORTER_OTLP_ENDPOINT: {
             value: '${otelCollectorContainer.properties.hosts['collector']}:4317'
@@ -541,20 +632,20 @@ resource webContainer 'Radius.Compute/containers@2025-08-01-preview' = {
           AUTH_CLIENT_SECRET: {
             value: authClientSecret
           }
-          AUTH_ISSUER: {
-            value: 'http://gateway-istio.istio-system/identity'
-          }
           AUTH_INTERNAL_ISSUER: {
-            value: 'http://${identityContainer.properties.hosts['identity']}/identity'
+            value: 'http://${keycloakContainer.properties.hosts['keycloak']}:8080/identity/realms/restaurant'
+          }
+          AUTH_ISSUER: {
+            value: '${publicAppUrl}/identity/realms/restaurant'
           }
           INTERNAL_API_BASE_URL: {
-            value: 'http://gateway-istio.istio-system'
+            value: publicAppUrl
           }
           NEXTAUTH_SECRET: {
             value: nextAuthSecret
           }
           NEXTAUTH_URL: {
-            value: 'http://localhost:3001'
+            value: publicAppUrl
           }
           OTEL_EXPORTER_OTLP_ENDPOINT: {
             value: 'http://${otelCollectorContainer.properties.hosts['collector']}:4318'
@@ -575,7 +666,7 @@ resource appRoute 'Radius.Compute/routes@2025-08-01-preview' = {
   properties: {
     environment: environment
     application: restaurantApp.id
-    codeReference: 'manifests/infrastructure/gateway/gateway.yaml#L1'
+    codeReference: 'src/backend/docker/docker-compose.traefik.yml#L24'
     kind: 'HTTP'
     rules: [
       {
@@ -621,9 +712,9 @@ resource appRoute 'Radius.Compute/routes@2025-08-01-preview' = {
           }
         ]
         destinationContainer: {
-          resourceId: identityContainer.id
-          containerName: 'identity'
-          containerPort: 80
+          resourceId: keycloakContainer.id
+          containerName: 'keycloak'
+          containerPort: 8080
         }
       }
       {
@@ -636,6 +727,18 @@ resource appRoute 'Radius.Compute/routes@2025-08-01-preview' = {
           resourceId: orderContainer.id
           containerName: 'order'
           containerPort: 8080
+        }
+      }
+      {
+        matches: [
+          {
+            httpPath: '/payment'
+          }
+        ]
+        destinationContainer: {
+          resourceId: paymentContainer.id
+          containerName: 'payment'
+          containerPort: 8980
         }
       }
       {
