@@ -13,6 +13,8 @@ RUN --mount=type=cache,target=/root/.m2 mvn package -Dquarkus.package.type=uber-
 FROM eclipse-temurin:17
 WORKDIR /work/
 COPY --from=build /app/target/*-runner.jar /work/application
+COPY docker-entrypoint.sh /usr/local/bin/order-api-entrypoint
+RUN chmod 755 /usr/local/bin/order-api-entrypoint
 
 EXPOSE 8080
-CMD ["java","-Dquarkus.http.host=0.0.0.0", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-jar", "./application"]
+ENTRYPOINT ["/usr/local/bin/order-api-entrypoint"]
