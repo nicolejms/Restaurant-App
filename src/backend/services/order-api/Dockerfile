@@ -1,4 +1,4 @@
-FROM maven:3.8.3-openjdk-17-slim AS build
+FROM --platform=$BUILDPLATFORM maven:3.8.3-openjdk-17-slim AS build
 
 WORKDIR /app
 
