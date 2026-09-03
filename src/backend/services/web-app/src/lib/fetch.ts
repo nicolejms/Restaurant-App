@@ -2,14 +2,20 @@ import { revalidateTag } from 'next/cache';
 import { logger } from './logger';
 import { Categories, CategoriesScheme, FoodItems, FoodItemsScheme } from './types/food-item';
 import { CustomerOrder, OrderSchema } from './types/order';
+import {
+  catalogApiBaseUrl,
+  identityApiBaseUrl,
+  orderApiBaseUrl,
+  publicApiBaseUrl
+} from './service-urls';
 
 export async function fetchFoodItems(): Promise<FoodItems> {
-  const apiUrl = process.env.INTERNAL_API_BASE_URL + '/catalog/items/all';
+  const apiUrl = `${catalogApiBaseUrl}/items/all`;
   return await fetchItems(apiUrl);
 }
 
 export async function fetchFoodItemsByCategory(category: string): Promise<FoodItems> {
-  const apiUrl = process.env.INTERNAL_API_BASE_URL + `/catalog/items/all?category_name=${category}`;
+  const apiUrl = `${catalogApiBaseUrl}/items/all?category_name=${category}`;
   return await fetchItems(apiUrl);
 }
 
@@ -23,7 +29,7 @@ async function fetchItems(apiUrl: string) {
   const catalog_items = items.catalog_items.map((item) => {
     return {
       ...item,
-      image: process.env.INTERNAL_API_BASE_URL + item.image
+      image: publicApiBaseUrl + item.image
     };
   });
 
@@ -32,7 +38,7 @@ async function fetchItems(apiUrl: string) {
 }
 
 export async function fetchCategories(): Promise<Categories> {
-  const apiUrl = process.env.INTERNAL_API_BASE_URL + '/catalog/categories';
+  const apiUrl = `${catalogApiBaseUrl}/categories`;
   const res = await fetch(apiUrl);
   if (!res.ok) {
     throw new Error('Failed to fetch categories data');
@@ -43,7 +49,7 @@ export async function fetchCategories(): Promise<Categories> {
 }
 
 export async function getUserInfo(userId: string) {
-  const apiUrl = process.env.INTERNAL_API_BASE_URL + `/users/${userId}`;
+  const apiUrl = `${identityApiBaseUrl}/users/${userId}`;
   const res = await fetch(apiUrl);
   if (!res.ok) {
     throw new Error('Failed to fetch user info');
@@ -82,7 +88,7 @@ async function fetchWithRetry(url: string, retryCount = 5): Promise<any> {
 
 export async function getOrderByTransactionID(transactionId: string): Promise<CustomerOrder> {
   await sleep(5000);
-  const apiUrl = `${process.env.INTERNAL_API_BASE_URL}/order/api/v1/orders/find?transactionId=${transactionId}`;
+  const apiUrl = `${orderApiBaseUrl}/api/v1/orders/find?transactionId=${transactionId}`;
   try {
     const data = await fetchWithRetry(apiUrl, 5);
     return OrderSchema.parse(data);

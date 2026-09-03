@@ -5,8 +5,9 @@ import { CustomerCart, CustomerCartItem, CartScheme } from '@/lib/types/cart';
 import { getServerSession } from 'next-auth';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
+import { cartApiBaseUrl } from '@/lib/service-urls';
 
-const cartUrl = `${process.env.INTERNAL_API_BASE_URL}/shoppingcart/api/v1/cart`;
+const cartUrl = `${cartApiBaseUrl}/api/v1/cart`;
 
 export async function getCart(cartID: string): Promise<CustomerCart | undefined> {
   const session = await getServerSession(authOptions);
@@ -179,4 +180,3 @@ export async function createCart(token?: string): Promise<CustomerCart> {
   const cart: CustomerCart = CartScheme.parse(await res.json());
   return cart;
 }
-

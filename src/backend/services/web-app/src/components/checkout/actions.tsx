@@ -13,8 +13,9 @@ import { getServerSession } from 'next-auth';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ZodIssue } from 'zod';
+import { checkoutApiBaseUrl } from '@/lib/service-urls';
 
-const checkoutUrl = `${process.env.INTERNAL_API_BASE_URL}/checkout/api/v1/checkout`;
+const checkoutUrl = `${checkoutApiBaseUrl}/api/v1/checkout`;
 
 export type CheckoutError = {
   backend_error?: {
