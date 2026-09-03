@@ -15,6 +15,9 @@ param identityDatabasePassword string
 param keycloakAdminPassword string
 
 @secure()
+param keycloakRealmJson string
+
+@secure()
 param nextAuthSecret string
 
 @secure()
@@ -130,6 +133,9 @@ resource appSecrets 'Radius.Security/secrets@2025-08-01-preview' = {
       keycloakAdminPassword: {
         value: keycloakAdminPassword
       }
+      keycloakRealmJson: {
+        value: keycloakRealmJson
+      }
       nextAuthSecret: {
         value: nextAuthSecret
       }
@@ -166,7 +172,7 @@ resource cartImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/cart-api?ref=ff5a20a0f07fcec76b0f249a7b4ed12ae8b8792e'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/cart-api?ref=bb406e768dbc2afa851dfe191f426fc163c1fbdc'
     }
     codeReference: 'src/backend/services/cart-api/Dockerfile#L1'
     environment: environment
@@ -184,7 +190,7 @@ resource catalogImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
       platforms: [
         'linux/amd64'
       ]
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/catalog-api?ref=ff5a20a0f07fcec76b0f249a7b4ed12ae8b8792e'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/catalog-api?ref=bb406e768dbc2afa851dfe191f426fc163c1fbdc'
     }
     codeReference: 'src/backend/services/catalog-api/Dockerfile#L1'
     environment: environment
@@ -202,7 +208,7 @@ resource checkoutImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
       platforms: [
         'linux/amd64'
       ]
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/checkout-api?ref=ff5a20a0f07fcec76b0f249a7b4ed12ae8b8792e'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/checkout-api?ref=bb406e768dbc2afa851dfe191f426fc163c1fbdc'
     }
     codeReference: 'src/backend/services/checkout-api/Dockerfile#L1'
     environment: environment
@@ -217,7 +223,7 @@ resource keycloakRealmInitImage 'Radius.Compute/containerImages@2025-08-01-previ
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/docker/keycloak?ref=ff5a20a0f07fcec76b0f249a7b4ed12ae8b8792e'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/docker/keycloak?ref=bb406e768dbc2afa851dfe191f426fc163c1fbdc'
     }
     codeReference: 'src/backend/docker/keycloak/Dockerfile#L1'
     environment: environment
@@ -232,7 +238,7 @@ resource orderImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/order-api?ref=ff5a20a0f07fcec76b0f249a7b4ed12ae8b8792e'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/order-api?ref=bb406e768dbc2afa851dfe191f426fc163c1fbdc'
     }
     codeReference: 'src/backend/services/order-api/Dockerfile#L1'
     environment: environment
@@ -247,7 +253,7 @@ resource paymentImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/payment-api?ref=ff5a20a0f07fcec76b0f249a7b4ed12ae8b8792e'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/payment-api?ref=bb406e768dbc2afa851dfe191f426fc163c1fbdc'
     }
     codeReference: 'src/backend/services/payment-api/Dockerfile#L1'
     environment: environment
@@ -266,7 +272,7 @@ resource webImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
       platforms: [
         'linux/amd64'
       ]
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/web-app?ref=ff5a20a0f07fcec76b0f249a7b4ed12ae8b8792e'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/web-app?ref=bb406e768dbc2afa851dfe191f426fc163c1fbdc'
     }
     codeReference: 'src/backend/services/web-app/local.Dockerfile#L1'
     environment: environment
@@ -495,6 +501,14 @@ resource keycloakContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             valueFrom: {
               secretKeyRef: {
                 key: 'authClientSecret'
+                secretName: appSecrets.name
+              }
+            }
+          }
+          KEYCLOAK_REALM_JSON: {
+            valueFrom: {
+              secretKeyRef: {
+                key: 'keycloakRealmJson'
                 secretName: appSecrets.name
               }
             }
