@@ -31,6 +31,7 @@ func Init() *Configuration {
 	}
 	cfg.KafkaConnectionString = firstNonEmpty(
 		os.Getenv("KAFKA_CONNECTION_STRING"),
+		os.Getenv("CONNECTION_ORDERSKAFKA_CONNECTIONSTRING"),
 		os.Getenv("CONNECTION_KAFKA_CONNECTIONSTRING"),
 	)
 

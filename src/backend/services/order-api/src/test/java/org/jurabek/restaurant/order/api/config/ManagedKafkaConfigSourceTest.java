@@ -15,16 +15,34 @@ class ManagedKafkaConfigSourceTest {
     @Test
     void configuresAzureEventHubsKafkaAuthentication() {
         ManagedKafkaConfigSource source = new ManagedKafkaConfigSource(
-            Map.of("CONNECTION_KAFKA_CONNECTIONSTRING", CONNECTION_STRING)
+            Map.of(
+                "CONNECTION_CHECKOUTKAFKA_CONNECTIONSTRING",
+                CONNECTION_STRING,
+                "CONNECTION_ORDERSKAFKA_CONNECTIONSTRING",
+                CONNECTION_STRING.replace("restaurant.", "orders.")
+            )
         );
 
         assertEquals(
             "restaurant.servicebus.windows.net:9093",
-            source.getValue("kafka.bootstrap.servers")
+            source.getValue("mp.messaging.incoming.checkout.bootstrap.servers")
         );
-        assertEquals("SASL_SSL", source.getValue("kafka.security.protocol"));
-        assertEquals("PLAIN", source.getValue("kafka.sasl.mechanism"));
-        assertTrue(source.getValue("kafka.sasl.jaas.config").contains(CONNECTION_STRING));
+        assertEquals(
+            "orders.servicebus.windows.net:9093",
+            source.getValue("mp.messaging.outgoing.order-completed.bootstrap.servers")
+        );
+        assertEquals(
+            "SASL_SSL",
+            source.getValue("mp.messaging.incoming.checkout.security.protocol")
+        );
+        assertEquals(
+            "PLAIN",
+            source.getValue("mp.messaging.outgoing.order-completed.sasl.mechanism")
+        );
+        assertTrue(
+            source.getValue("mp.messaging.incoming.checkout.sasl.jaas.config")
+                .contains(CONNECTION_STRING)
+        );
     }
 
     @Test

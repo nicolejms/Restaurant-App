@@ -11,6 +11,10 @@ import org.eclipse.microprofile.config.spi.ConfigSource;
 public final class ManagedKafkaConfigSource implements ConfigSource {
     private static final int ORDINAL = 350;
     private static final String RADIUS_CONNECTION_STRING = "CONNECTION_KAFKA_CONNECTIONSTRING";
+    private static final String RADIUS_CHECKOUT_CONNECTION_STRING =
+        "CONNECTION_CHECKOUTKAFKA_CONNECTIONSTRING";
+    private static final String RADIUS_ORDERS_CONNECTION_STRING =
+        "CONNECTION_ORDERSKAFKA_CONNECTIONSTRING";
     private static final String KAFKA_CONNECTION_STRING = "KAFKA_CONNECTION_STRING";
 
     private final Map<String, String> properties;
@@ -44,12 +48,38 @@ public final class ManagedKafkaConfigSource implements ConfigSource {
     }
 
     private static Map<String, String> buildProperties(Map<String, String> environment) {
-        String connectionString = firstNonBlank(
+        String sharedConnectionString = firstNonBlank(
             environment.get(KAFKA_CONNECTION_STRING),
-            environment.get(RADIUS_CONNECTION_STRING)
-        );
-        if (connectionString == null) {
+            environment.get(RADIUS_CONNECTION_STRING));
+        String checkoutConnectionString = firstNonBlank(
+            environment.get(RADIUS_CHECKOUT_CONNECTION_STRING),
+            sharedConnectionString);
+        String ordersConnectionString = firstNonBlank(
+            environment.get(RADIUS_ORDERS_CONNECTION_STRING),
+            sharedConnectionString);
+        if (checkoutConnectionString == null && ordersConnectionString == null) {
             return Collections.emptyMap();
+        }
+
+        Map<String, String> managedProperties = new LinkedHashMap<>();
+        addKafkaProperties(
+            managedProperties,
+            "mp.messaging.incoming.checkout.",
+            checkoutConnectionString);
+        addKafkaProperties(
+            managedProperties,
+            "mp.messaging.outgoing.order-completed.",
+            ordersConnectionString);
+        return Collections.unmodifiableMap(managedProperties);
+    }
+
+    private static void addKafkaProperties(
+        Map<String, String> properties,
+        String prefix,
+        String connectionString
+    ) {
+        if (connectionString == null) {
+            return;
         }
 
         String endpoint = connectionStringParts(connectionString).get("endpoint");
@@ -62,16 +92,14 @@ public final class ManagedKafkaConfigSource implements ConfigSource {
             throw new IllegalArgumentException("Kafka Endpoint must be an sb:// URL");
         }
 
-        Map<String, String> managedProperties = new LinkedHashMap<>();
-        managedProperties.put("kafka.bootstrap.servers", endpointUri.getHost() + ":9093");
-        managedProperties.put("kafka.security.protocol", "SASL_SSL");
-        managedProperties.put("kafka.sasl.mechanism", "PLAIN");
-        managedProperties.put(
-            "kafka.sasl.jaas.config",
+        properties.put(prefix + "bootstrap.servers", endpointUri.getHost() + ":9093");
+        properties.put(prefix + "security.protocol", "SASL_SSL");
+        properties.put(prefix + "sasl.mechanism", "PLAIN");
+        properties.put(
+            prefix + "sasl.jaas.config",
             "org.apache.kafka.common.security.plain.PlainLoginModule required "
                 + "username=\"$ConnectionString\" password=\"" + escapeJaas(connectionString) + "\";"
         );
-        return Collections.unmodifiableMap(managedProperties);
     }
 
     private static Map<String, String> connectionStringParts(String connectionString) {

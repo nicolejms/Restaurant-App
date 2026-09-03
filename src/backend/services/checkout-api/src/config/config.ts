@@ -19,6 +19,7 @@ export function getConfig(): Config {
     const checkoutKafkaBroker = process.env.KAFKA_BROKER || ""
     const kafkaConnectionString =
         process.env.KAFKA_CONNECTION_STRING ||
+        process.env.CONNECTION_CHECKOUTKAFKA_CONNECTIONSTRING ||
         process.env.CONNECTION_KAFKA_CONNECTIONSTRING ||
         ""
     const checkoutTopic = process.env.CHECKOUT_TOPIC || ""
