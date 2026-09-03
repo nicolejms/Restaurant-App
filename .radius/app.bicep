@@ -53,7 +53,7 @@ resource catalogPostgresDb 'Radius.Data/postgreSqlDatabases@2025-08-01-preview' 
     password: catalogDatabasePassword
     port: 5432
     size: 'S'
-    username: 'myadmin'
+    username: 'catalogadmin'
   }
 }
 
@@ -67,7 +67,7 @@ resource identityPostgresDb 'Radius.Data/postgreSqlDatabases@2025-08-01-preview'
     password: identityDatabasePassword
     port: 5432
     size: 'S'
-    username: 'myadmin'
+    username: 'identityadmin'
   }
 }
 
@@ -81,7 +81,7 @@ resource orderPostgresDb 'Radius.Data/postgreSqlDatabases@2025-08-01-preview' = 
     password: orderDatabasePassword
     port: 5432
     size: 'S'
-    username: 'myadmin'
+    username: 'orderadmin'
   }
 }
 
@@ -172,7 +172,7 @@ resource cartImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/cart-api?ref=ead28158007806fd39de621874e8ede05102e864'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/cart-api?ref=ba20e090713f80cff16546dc59f2776ff6830c33'
     }
     codeReference: 'src/backend/services/cart-api/Dockerfile#L1'
     environment: environment
@@ -190,7 +190,7 @@ resource catalogImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
       platforms: [
         'linux/amd64'
       ]
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/catalog-api?ref=ead28158007806fd39de621874e8ede05102e864'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/catalog-api?ref=ba20e090713f80cff16546dc59f2776ff6830c33'
     }
     codeReference: 'src/backend/services/catalog-api/Dockerfile#L1'
     environment: environment
@@ -208,7 +208,7 @@ resource checkoutImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
       platforms: [
         'linux/amd64'
       ]
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/checkout-api?ref=ead28158007806fd39de621874e8ede05102e864'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/checkout-api?ref=ba20e090713f80cff16546dc59f2776ff6830c33'
     }
     codeReference: 'src/backend/services/checkout-api/Dockerfile#L1'
     environment: environment
@@ -223,7 +223,7 @@ resource keycloakRealmInitImage 'Radius.Compute/containerImages@2025-08-01-previ
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/docker/keycloak?ref=ead28158007806fd39de621874e8ede05102e864'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/docker/keycloak?ref=ba20e090713f80cff16546dc59f2776ff6830c33'
     }
     codeReference: 'src/backend/docker/keycloak/Dockerfile#L1'
     environment: environment
@@ -238,7 +238,7 @@ resource orderImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/order-api?ref=ead28158007806fd39de621874e8ede05102e864'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/order-api?ref=ba20e090713f80cff16546dc59f2776ff6830c33'
     }
     codeReference: 'src/backend/services/order-api/Dockerfile#L1'
     environment: environment
@@ -253,7 +253,7 @@ resource paymentImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   properties: {
     application: restaurantApp.id
     build: {
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/payment-api?ref=ead28158007806fd39de621874e8ede05102e864'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/payment-api?ref=ba20e090713f80cff16546dc59f2776ff6830c33'
     }
     codeReference: 'src/backend/services/payment-api/Dockerfile#L1'
     environment: environment
@@ -272,7 +272,7 @@ resource webImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
       platforms: [
         'linux/amd64'
       ]
-      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/web-app?ref=ead28158007806fd39de621874e8ede05102e864'
+      source: 'git::https://github.com/nicolejms/Restaurant-App.git//src/backend/services/web-app?ref=ba20e090713f80cff16546dc59f2776ff6830c33'
     }
     codeReference: 'src/backend/services/web-app/local.Dockerfile#L1'
     environment: environment
@@ -374,7 +374,7 @@ resource catalogContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             value: '${catalogPostgresDb.properties.port}'
           }
           DATABASE_USERNAME: {
-            value: 'myadmin'
+            value: 'catalogadmin'
           }
           ENV: {
             value: 'prod'
@@ -483,7 +483,7 @@ resource keycloakContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             value: 'jdbc:postgresql://${identityPostgresDb.properties.host}:${identityPostgresDb.properties.port}/keycloak'
           }
           KC_DB_USERNAME: {
-            value: 'myadmin'
+            value: 'identityadmin'
           }
           KC_HOSTNAME: {
             value: '${publicScheme}://${toLower(publicHostname)}/identity'
@@ -609,7 +609,7 @@ resource orderContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             }
           }
           QUARKUS_DATASOURCE_USERNAME: {
-            value: 'myadmin'
+            value: 'orderadmin'
           }
           QUARKUS_GRPC_CLIENTS_PAYMENTSERVICE_HOST: {
             value: paymentContainer.properties.hosts.payment
