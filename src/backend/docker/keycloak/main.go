@@ -23,9 +23,9 @@ func main() {
 	outputPath := environmentOrDefault("REALM_OUTPUT_PATH", defaultOutputPath)
 	clientID := environmentOrDefault("AUTH_CLIENT_ID", defaultClientID)
 
-	realmJSON, err := os.ReadFile(templatePath)
+	realmJSON, err := loadRealmTemplate(templatePath, os.Getenv("KEYCLOAK_REALM_JSON"))
 	if err != nil {
-		exitWithError(fmt.Errorf("read realm template: %w", err))
+		exitWithError(err)
 	}
 
 	updatedRealm, err := injectClientSecret(realmJSON, clientID, clientSecret)
@@ -38,6 +38,18 @@ func main() {
 	if err := os.WriteFile(outputPath, updatedRealm, 0o600); err != nil {
 		exitWithError(fmt.Errorf("write rendered realm: %w", err))
 	}
+}
+
+func loadRealmTemplate(templatePath, realmJSON string) ([]byte, error) {
+	if realmJSON != "" {
+		return []byte(realmJSON), nil
+	}
+
+	template, err := os.ReadFile(templatePath)
+	if err != nil {
+		return nil, fmt.Errorf("read realm template: %w", err)
+	}
+	return template, nil
 }
 
 func injectClientSecret(realmJSON []byte, clientID, clientSecret string) ([]byte, error) {
