@@ -289,9 +289,11 @@ resource cartContainer 'Radius.Compute/containers@2025-08-01-preview' = {
     codeReference: 'src/backend/services/cart-api/cmd/api/main.go#L61'
     connections: {
       ordersKafka: {
+        disableDefaultEnvVars: true
         source: ordersKafka.id
       }
       redis: {
+        disableDefaultEnvVars: true
         source: redisCache.id
       }
     }
@@ -303,6 +305,22 @@ resource cartContainer 'Radius.Compute/containers@2025-08-01-preview' = {
           }
           BASE_PATH: {
             value: '/shoppingcart'
+          }
+          CONNECTION_ORDERSKAFKA_CONNECTIONSTRING: {
+            valueFrom: {
+              secretKeyRef: {
+                key: 'connectionString'
+                secretName: ordersKafka.properties.secrets.name
+              }
+            }
+          }
+          CONNECTION_REDIS_URL: {
+            valueFrom: {
+              secretKeyRef: {
+                key: 'url'
+                secretName: redisCache.properties.secrets.name
+              }
+            }
           }
           IDENTITY_URL: {
             value: 'http://${keycloakContainer.properties.hosts.keycloak}:8080/identity'
@@ -388,6 +406,7 @@ resource checkoutContainer 'Radius.Compute/containers@2025-08-01-preview' = {
     codeReference: 'src/backend/services/checkout-api/src/index.ts#L30'
     connections: {
       checkoutKafka: {
+        disableDefaultEnvVars: true
         source: checkoutKafka.id
       }
     }
@@ -402,6 +421,14 @@ resource checkoutContainer 'Radius.Compute/containers@2025-08-01-preview' = {
           }
           CHECKOUT_TOPIC: {
             value: 'checkout'
+          }
+          CONNECTION_CHECKOUTKAFKA_CONNECTIONSTRING: {
+            valueFrom: {
+              secretKeyRef: {
+                key: 'connectionString'
+                secretName: checkoutKafka.properties.secrets.name
+              }
+            }
           }
           HOST: {
             value: '0.0.0.0'
@@ -543,15 +570,33 @@ resource orderContainer 'Radius.Compute/containers@2025-08-01-preview' = {
     codeReference: '.radius/app.bicep'
     connections: {
       checkoutKafka: {
+        disableDefaultEnvVars: true
         source: checkoutKafka.id
       }
       ordersKafka: {
+        disableDefaultEnvVars: true
         source: ordersKafka.id
       }
     }
     containers: {
       order: {
         env: {
+          CONNECTION_CHECKOUTKAFKA_CONNECTIONSTRING: {
+            valueFrom: {
+              secretKeyRef: {
+                key: 'connectionString'
+                secretName: checkoutKafka.properties.secrets.name
+              }
+            }
+          }
+          CONNECTION_ORDERSKAFKA_CONNECTIONSTRING: {
+            valueFrom: {
+              secretKeyRef: {
+                key: 'connectionString'
+                secretName: ordersKafka.properties.secrets.name
+              }
+            }
+          }
           QUARKUS_DATASOURCE_JDBC_URL: {
             value: 'jdbc:postgresql://${orderPostgresDb.properties.host}:${orderPostgresDb.properties.port}/orderdb'
           }
