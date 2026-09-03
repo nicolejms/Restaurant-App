@@ -1,6 +1,7 @@
 import { Kafka, Producer, ProducerRecord } from 'kafkajs'
 import { config } from '../config/config'
 import { logger } from '../utils/logger'
+import { createKafkaConfig } from './kafkaConfig'
 
 export class Publisher {
   private producer: Producer
@@ -30,14 +31,13 @@ export class Publisher {
   }
 
   private createProducer(): Producer {
-    const kafka = new Kafka({
-      clientId: this.clientId,
-      brokers: this.brokers,
-      retry: {
-        initialRetryTime: 3000,
-        retries: 15
-      },
-    })
+    const kafka = new Kafka(
+      createKafkaConfig(
+        this.clientId,
+        this.brokers,
+        config.kafkaConnectionString
+      )
+    )
     return kafka.producer()
   }
 }

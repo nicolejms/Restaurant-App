@@ -7,6 +7,7 @@ describe("getConfig", () => {
       host: "127.0.0.1",
       port: 8080,
       checkoutKafkaBroker: "",
+      kafkaConnectionString: "",
       checkoutTopic: "",
       paymentAPIGrpcUrl: "localhost:50004",
       cartAPIGrpcUrl: "localhost:50003",
@@ -20,6 +21,7 @@ describe("getConfig", () => {
     process.env.HOST = "example.com";
     process.env.PORT = "1234";
     process.env.KAFKA_BROKER = "kafka.example.com:9092";
+    process.env.KAFKA_CONNECTION_STRING = "event-hubs-connection";
     process.env.CHECKOUT_TOPIC = "checkout";
     process.env.PAYMENT_API_URL = "payment.example.com:50004";
     process.env.CART_URL = "cart.example.com:50003";
@@ -28,6 +30,7 @@ describe("getConfig", () => {
       host: "example.com",
       port: 1234,
       checkoutKafkaBroker: "kafka.example.com:9092",
+      kafkaConnectionString: "event-hubs-connection",
       checkoutTopic: "checkout",
       paymentAPIGrpcUrl: "payment.example.com:50004",
       cartAPIGrpcUrl: "cart.example.com:50003",
@@ -39,6 +42,7 @@ describe("getConfig", () => {
     delete process.env.HOST;
     delete process.env.PORT;
     delete process.env.KAFKA_BROKER;
+    delete process.env.KAFKA_CONNECTION_STRING;
     delete process.env.CHECKOUT_TOPIC;
     delete process.env.PAYMENT_API_URL;
     delete process.env.CART_URL;

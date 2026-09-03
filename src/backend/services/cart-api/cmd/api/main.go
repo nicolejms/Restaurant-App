@@ -65,29 +65,27 @@ func main() {
 	basePath, _ := os.LookupEnv("BASE_PATH")
 	docs.SwaggerInfo.BasePath = basePath
 
-	close, err := instrumentation.StartOTEL(ctx)	
+	close, err := instrumentation.StartOTEL(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error starting otel")
 	}
-	defer close() 
+	defer close()
 
 	handleSigterm()
 	router := http.NewServeMux()
 	cfg := config.Init()
 
-	redisClient, err := initRedis(cfg.RedisHost)
+	redisClient, err := initRedis(cfg.RedisHost, cfg.RedisURL)
 	if err != nil {
-		fmt.Print(err)
+		log.Fatal().Err(err).Msg("invalid Redis configuration")
 	}
 	cartRepository := repositories.NewCartRepository(redisClient)
 
-	config := sarama.NewConfig()
-	config.Consumer.Offsets.AutoCommit.Enable = true
-	config.Consumer.Offsets.AutoCommit.Interval = 1 * time.Second
-
-	
-
-	kafkaConsumer, error := sarama.NewConsumerGroup([]string{cfg.KafkaBroker}, "cart-api", config)
+	kafkaBrokers, kafkaConfig, err := config.KafkaClientConfig(cfg.KafkaBroker, cfg.KafkaConnectionString)
+	if err != nil {
+		log.Fatal().Err(err).Msg("invalid Kafka configuration")
+	}
+	kafkaConsumer, error := sarama.NewConsumerGroup(kafkaBrokers, "cart-api", kafkaConfig)
 	if error != nil {
 		log.Fatal().Err(error).Msg("new consumer failed!")
 	}
@@ -106,7 +104,7 @@ func main() {
 	router.HandleFunc("GET "+cartBasePath+"/{id}", handlers.ErrorHandler(cartHandler.Get))
 	router.HandleFunc("DELETE "+cartBasePath+"/{id}", handlers.ErrorHandler(cartHandler.Delete))
 	router.HandleFunc("PUT "+cartBasePath+"/{id}", handlers.ErrorHandler(cartHandler.Update))
-	router.HandleFunc("POST "+cartBasePath+"/{id}/item", handlers.ErrorHandler(cartHandler.AddItem))           // adds item or increments quantity by CartID
+	router.HandleFunc("POST "+cartBasePath+"/{id}/item", handlers.ErrorHandler(cartHandler.AddItem))            // adds item or increments quantity by CartID
 	router.HandleFunc("PUT "+cartBasePath+"/{id}/item/{itemID}", handlers.ErrorHandler(cartHandler.UpdateItem)) // updates line item item_id is ignored
 	router.HandleFunc("DELETE "+cartBasePath+"/{id}/item/{itemID}", handlers.ErrorHandler(cartHandler.DeleteItem))
 
@@ -219,13 +217,12 @@ func initMeter(ctx context.Context) (*sdkmetric.MeterProvider, error) {
 	return mp, nil
 }
 
-func initRedis(redisHost string) (*redis.Client, error) {
-	if redisHost == "" {
-		redisHost = ":6379"
+func initRedis(redisHost, redisURL string) (*redis.Client, error) {
+	options, err := config.RedisOptions(redisHost, redisURL)
+	if err != nil {
+		return nil, err
 	}
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: redisHost,
-	})
+	redisClient := redis.NewClient(options)
 
 	// Enable tracing instrumentation.
 	if err := redisotel.InstrumentTracing(redisClient); err != nil {
@@ -237,6 +234,6 @@ func initRedis(redisHost string) (*redis.Client, error) {
 		log.Fatal().Err(err)
 	}
 
-	err := database.HealthCheck(context.Background(), redisClient)
+	err = database.HealthCheck(context.Background(), redisClient)
 	return redisClient, err
 }
