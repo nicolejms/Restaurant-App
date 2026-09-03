@@ -301,7 +301,7 @@ resource cartContainer 'Radius.Compute/containers@2025-08-01-preview' = {
       cart: {
         env: {
           AUTH_URL: {
-            value: '${publicScheme}://${publicHostname}/identity/realms/restaurant'
+            value: '${publicScheme}://${toLower(publicHostname)}/identity/realms/restaurant'
           }
           BASE_PATH: {
             value: '/shoppingcart'
@@ -486,7 +486,7 @@ resource keycloakContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             value: 'myadmin'
           }
           KC_HOSTNAME: {
-            value: '${publicScheme}://${publicHostname}/identity'
+            value: '${publicScheme}://${toLower(publicHostname)}/identity'
           }
           KC_HTTP_RELATIVE_PATH: {
             value: '/identity'
@@ -688,7 +688,7 @@ resource webContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             value: 'http://${keycloakContainer.properties.hosts.keycloak}:8080/identity/realms/restaurant'
           }
           AUTH_ISSUER: {
-            value: '${publicScheme}://${publicHostname}/identity/realms/restaurant'
+            value: '${publicScheme}://${toLower(publicHostname)}/identity/realms/restaurant'
           }
           CART_API_URL: {
             value: 'http://${cartContainer.properties.hosts.cart}:5200/shoppingcart'
@@ -708,7 +708,7 @@ resource webContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             }
           }
           NEXTAUTH_URL: {
-            value: '${publicScheme}://${publicHostname}'
+            value: '${publicScheme}://${toLower(publicHostname)}'
           }
           NEXT_SHARP_PATH: {
             value: './node_modules/sharp'
@@ -717,7 +717,7 @@ resource webContainer 'Radius.Compute/containers@2025-08-01-preview' = {
             value: 'http://${orderContainer.properties.hosts.order}:8080/order'
           }
           PUBLIC_API_BASE_URL: {
-            value: '${publicScheme}://${publicHostname}'
+            value: '${publicScheme}://${toLower(publicHostname)}'
           }
         }
         image: webImage.properties.imageReference
@@ -740,7 +740,7 @@ resource restaurantRoute 'Radius.Compute/routes@2025-08-01-preview' = {
     codeReference: 'src/backend/docker/docker-compose.traefik.yml#L27'
     environment: environment
     hostnames: [
-      publicHostname
+      toLower(publicHostname)
     ]
     kind: 'HTTP'
     rules: [
