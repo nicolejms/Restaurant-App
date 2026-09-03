@@ -22,6 +22,11 @@ import (
 type CloseFunc func()
 
 func StartOTEL(ctx context.Context) (CloseFunc, error) {
+	otelExportEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	if otelExportEndpoint == "" {
+		return func() {}, nil
+	}
+
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
 			// the service name used to display traces in backends
@@ -36,10 +41,6 @@ func StartOTEL(ctx context.Context) (CloseFunc, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	otelExportEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-	if otelExportEndpoint == "" {
-		otelExportEndpoint = "localhost:4317"
-	}
 	conn, err := grpc.DialContext(ctx, otelExportEndpoint,
 		// Note the use of insecure transport here. TLS is recommended in production.
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -61,7 +62,7 @@ func StartOTEL(ctx context.Context) (CloseFunc, error) {
 
 	closeFunc := func() {
 		// Handle shutdown properly so nothing leaks.
-		if meterErr := meterProvider.Shutdown(ctx ); meterErr != nil {
+		if meterErr := meterProvider.Shutdown(ctx); meterErr != nil {
 			log.Error().Msg(meterErr.Error())
 		}
 
